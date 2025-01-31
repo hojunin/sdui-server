@@ -41,4 +41,8 @@ export const initialRoles = [
     name: RoleType.SUPER_ADMIN,
     permissions: ['manage_all', 'manage_roles', 'manage_permissions'],
   },
+  {
+    name: RoleType.AD_ADMIN,
+    permissions: ['view_ad', 'create_ad', 'edit_ad', 'delete_ad'],
+  },
 ];
