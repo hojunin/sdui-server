@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { GraphQLModule } from '@nestjs/graphql';
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { UsersModule } from './users/users.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -8,11 +10,24 @@ import { User } from './users/entities/user.entity';
 import { Role } from './users/entities/role.entity';
 import { SeedService } from './database/seeds/seed.service';
 import { AuthModule } from './auth/auth.module';
+import { MenusModule } from './menus/menus.module';
+import { Menu } from './menus/entities/menu.entity';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+    }),
+    GraphQLModule.forRoot<ApolloDriverConfig>({
+      driver: ApolloDriver,
+      autoSchemaFile: true,
+      playground: true,
+      sortSchema: true,
+      context: ({ req, res }) => ({ req, res }),
+      cors: {
+        credentials: true,
+        origin: true,
+      },
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -23,7 +38,7 @@ import { AuthModule } from './auth/auth.module';
         username: configService.get('DB_USERNAME'),
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_DATABASE'),
-        entities: [User, Role],
+        entities: [User, Role, Menu],
         synchronize: configService.get('NODE_ENV') === 'development',
         logging: configService.get('NODE_ENV') === 'development',
       }),
@@ -32,6 +47,7 @@ import { AuthModule } from './auth/auth.module';
     TypeOrmModule.forFeature([Role]),
     UsersModule,
     AuthModule,
+    MenusModule,
   ],
   controllers: [AppController],
   providers: [AppService, SeedService],
