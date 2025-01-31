@@ -9,6 +9,8 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
+  Request,
+  ForbiddenException,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -19,7 +21,6 @@ import { RoleType } from './entities/role.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('users')
-@UseGuards(JwtAuthGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
@@ -29,28 +30,42 @@ export class UsersController {
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard)
   findAll() {
     return this.usersService.findAll();
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard)
   findOne(@Param('id') id: string) {
     return this.usersService.findOne(+id);
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+  @UseGuards(JwtAuthGuard)
+  async update(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
+    if (req.user.id !== +id) {
+      throw new ForbiddenException('You can only update your own profile');
+    }
     return this.usersService.update(+id, updateUserDto);
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id') id: string) {
+  async remove(@Request() req, @Param('id') id: string) {
+    if (req.user.id !== +id) {
+      throw new ForbiddenException('You can only delete your own account');
+    }
     return this.usersService.remove(+id);
   }
 
   @Post(':userId/roles/:roleType')
-  @UseGuards(RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(RoleType.SUPER_ADMIN, RoleType.AUTHENTICATION_ADMIN)
   async addRole(
     @Param('userId') userId: string,
@@ -60,7 +75,7 @@ export class UsersController {
   }
 
   @Delete(':userId/roles/:roleType')
-  @UseGuards(RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(RoleType.SUPER_ADMIN, RoleType.AUTHENTICATION_ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   async removeRole(
@@ -71,7 +86,7 @@ export class UsersController {
   }
 
   @Get(':userId/roles')
-  // @UseGuards(RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(RoleType.SUPER_ADMIN, RoleType.AUTHENTICATION_ADMIN)
   async getUserRoles(@Param('userId') userId: string) {
     const user = await this.usersService.findOne(+userId);
@@ -79,7 +94,7 @@ export class UsersController {
   }
 
   @Get(':userId/permissions')
-  @UseGuards(RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(RoleType.SUPER_ADMIN, RoleType.AUTHENTICATION_ADMIN)
   async getUserPermissions(@Param('userId') userId: string) {
     return this.usersService.getUserPermissions(+userId);
