@@ -12,6 +12,8 @@ import { SeedService } from './database/seeds/seed.service';
 import { AuthModule } from './auth/auth.module';
 import { MenusModule } from './menus/menus.module';
 import { Menu } from './menus/entities/menu.entity';
+import { LayoutsModule } from './layouts/layouts.module';
+import { Layout } from './layouts/entities/layout.entity';
 
 @Module({
   imports: [
@@ -38,7 +40,7 @@ import { Menu } from './menus/entities/menu.entity';
         username: configService.get('DB_USERNAME'),
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_DATABASE'),
-        entities: [User, Role, Menu],
+        entities: [User, Role, Menu, Layout],
         synchronize: configService.get('NODE_ENV') === 'development',
         logging: configService.get('NODE_ENV') === 'development',
       }),
@@ -48,6 +50,7 @@ import { Menu } from './menus/entities/menu.entity';
     UsersModule,
     AuthModule,
     MenusModule,
+    LayoutsModule,
   ],
   controllers: [AppController],
   providers: [AppService, SeedService],
