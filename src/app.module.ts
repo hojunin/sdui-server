@@ -14,6 +14,11 @@ import { MenusModule } from './menus/menus.module';
 import { Menu } from './menus/entities/menu.entity';
 import { LayoutsModule } from './layouts/layouts.module';
 import { Layout } from './layouts/entities/layout.entity';
+import { WidgetsModule } from './widgets/widgets.module';
+import { Widget } from './widgets/entities/widget.entity';
+import { WidgetLayout } from './widgets/entities/widget-layout.entity';
+import { WidgetRelation } from './widgets/entities/widget-relation.entity';
+import GraphQLJSON from 'graphql-type-json';
 
 @Module({
   imports: [
@@ -30,6 +35,7 @@ import { Layout } from './layouts/entities/layout.entity';
         credentials: true,
         origin: true,
       },
+      resolvers: { JSON: GraphQLJSON },
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -40,7 +46,15 @@ import { Layout } from './layouts/entities/layout.entity';
         username: configService.get('DB_USERNAME'),
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_DATABASE'),
-        entities: [User, Role, Menu, Layout],
+        entities: [
+          User,
+          Role,
+          Menu,
+          Layout,
+          Widget,
+          WidgetLayout,
+          WidgetRelation,
+        ],
         synchronize: configService.get('NODE_ENV') === 'development',
         logging: configService.get('NODE_ENV') === 'development',
       }),
@@ -51,6 +65,7 @@ import { Layout } from './layouts/entities/layout.entity';
     AuthModule,
     MenusModule,
     LayoutsModule,
+    WidgetsModule,
   ],
   controllers: [AppController],
   providers: [AppService, SeedService],

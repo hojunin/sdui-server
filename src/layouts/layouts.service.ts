@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { CreateLayoutInput } from './dto/create-layout.input';
 import { UpdateLayoutInput } from './dto/update-layout.input';
 import { Layout } from './entities/layout.entity';
+import { ILike } from 'typeorm';
 
 @Injectable()
 export class LayoutsService {
@@ -13,25 +14,27 @@ export class LayoutsService {
   ) {}
 
   async create(createLayoutInput: CreateLayoutInput): Promise<Layout> {
-    // TODO: 같은 path로 레이아웃 생성 요청이 들어오면 일단 기존 revision을 따라가도록 변경해야 함(현재 코드는 개발용)
+    // 이전 레이아웃 비활성화
     await this.layoutRepository.update(
-      { path: createLayoutInput.path },
+      { path: createLayoutInput.path.trim() },
       { isActive: false },
     );
 
     // 현재 path의 최신 revision 조회
     const latestLayout = await this.layoutRepository.findOne({
-      where: { path: createLayoutInput.path },
+      where: { path: createLayoutInput.path.trim() },
       order: { revision: 'DESC' },
     });
 
     const layout = this.layoutRepository.create({
       ...createLayoutInput,
+      path: createLayoutInput.path.trim(),
       revision: latestLayout ? latestLayout.revision + 1 : 1,
       isActive: true,
     });
 
-    return this.layoutRepository.save(layout);
+    const savedLayout = await this.layoutRepository.save(layout);
+    return savedLayout;
   }
 
   async findAll(): Promise<Layout[]> {
@@ -57,39 +60,24 @@ export class LayoutsService {
   }
 
   async findByPath(path: string): Promise<Layout> {
-    const layout = await this.layoutRepository.findOne({
-      where: { path, isActive: true },
+    const trimmedPath = path.trim();
+
+    const allLayouts = await this.layoutRepository.find({
+      where: [{ path: ILike(`%${trimmedPath}%`), isActive: true }],
       order: { revision: 'DESC' },
     });
 
-    if (!layout) {
-      throw new NotFoundException(`Layout with path ${path} not found`);
+    if (allLayouts.length === 0) {
+      throw new NotFoundException(
+        `Layout with path ${path} not found. Available paths: ${(
+          await this.layoutRepository.find()
+        )
+          .map((l) => l.path)
+          .join(', ')}`,
+      );
     }
-    return layout;
-  }
 
-  async update(
-    id: string,
-    updateLayoutInput: UpdateLayoutInput,
-  ): Promise<Layout> {
-    const currentLayout = await this.findOne(id);
-
-    // 현재 활성화된 레이아웃을 비활성화
-    await this.layoutRepository.update(
-      { path: currentLayout.path, isActive: true },
-      { isActive: false },
-    );
-
-    // 새로운 레이아웃 row 생성
-    const newLayout = this.layoutRepository.create({
-      ...currentLayout, // 기존 레이아웃의 기본 정보 복사
-      ...updateLayoutInput, // 업데이트할 내용 적용
-      id: undefined, // 새로운 ID 생성을 위해 undefined 설정
-      revision: currentLayout.revision + 1,
-      isActive: true,
-    });
-
-    return this.layoutRepository.save(newLayout);
+    return allLayouts[0];
   }
 
   async remove(id: string): Promise<boolean> {
@@ -101,15 +89,25 @@ export class LayoutsService {
   }
 
   async getLayoutHistory(path: string): Promise<Layout[]> {
+    const trimmedPath = path.trim();
     return this.layoutRepository.find({
-      where: { path },
+      where: [
+        { path: trimmedPath },
+        { path: ` ${trimmedPath}` },
+        { path: ILike(`%${trimmedPath}`) },
+      ],
       order: { revision: 'DESC' },
     });
   }
 
   async rollbackToRevision(path: string, revision: number): Promise<Layout> {
+    const trimmedPath = path.trim();
     const targetRevision = await this.layoutRepository.findOne({
-      where: { path, revision },
+      where: [
+        { path: trimmedPath, revision },
+        { path: ` ${trimmedPath}`, revision },
+        { path: ILike(`%${trimmedPath}`), revision },
+      ],
     });
 
     if (!targetRevision) {
@@ -120,7 +118,7 @@ export class LayoutsService {
 
     // 현재 활성화된 레이아웃을 비활성화
     await this.layoutRepository.update(
-      { path, isActive: true },
+      { path: targetRevision.path, isActive: true },
       { isActive: false },
     );
 

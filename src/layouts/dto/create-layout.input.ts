@@ -1,4 +1,4 @@
-import { Field, InputType, ID } from '@nestjs/graphql';
+import { Field, InputType } from '@nestjs/graphql';
 import {
   IsArray,
   IsBoolean,
@@ -9,34 +9,7 @@ import {
   IsString,
 } from 'class-validator';
 import { LayoutSectionType } from '../entities/layout.entity';
-
-@InputType()
-export class LayoutStyleInput {
-  @Field(() => String, { nullable: true })
-  @IsOptional()
-  @IsString()
-  backgroundColor?: string;
-
-  @Field(() => String, { nullable: true })
-  @IsOptional()
-  @IsString()
-  padding?: string;
-
-  @Field(() => String, { nullable: true })
-  @IsOptional()
-  @IsString()
-  margin?: string;
-
-  @Field(() => String, { nullable: true })
-  @IsOptional()
-  @IsString()
-  width?: string;
-
-  @Field(() => String, { nullable: true })
-  @IsOptional()
-  @IsString()
-  height?: string;
-}
+import GraphQLJSON from 'graphql-type-json';
 
 @InputType()
 export class LayoutSectionInput {
@@ -53,14 +26,14 @@ export class LayoutSectionInput {
   @IsNumber()
   order: number;
 
-  @Field(() => [String], { defaultValue: [] })
+  @Field(() => [String], { nullable: true })
   @IsArray()
-  @IsString({ each: true })
-  children: string[];
-
-  @Field(() => LayoutStyleInput, { nullable: true })
   @IsOptional()
-  style?: LayoutStyleInput;
+  widgetTypes?: string[];
+
+  @Field(() => GraphQLJSON, { nullable: true })
+  @IsOptional()
+  style?: Record<string, any>;
 }
 
 @InputType()
@@ -94,7 +67,7 @@ export class CreateLayoutInput {
   @IsString()
   templateDescription?: string;
 
-  @Field(() => ID, { nullable: true })
+  @Field(() => String, { nullable: true })
   @IsOptional()
   @IsString()
   baseTemplateId?: string;

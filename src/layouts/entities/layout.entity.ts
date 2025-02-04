@@ -3,9 +3,13 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { WidgetLayout } from '../../widgets/entities/widget-layout.entity';
+import { Widget } from '../../widgets/entities/widget.entity';
+import GraphQLJSON from 'graphql-type-json';
 
 export enum LayoutSectionType {
   HEADER = 'HEADER',
@@ -19,26 +23,6 @@ registerEnumType(LayoutSectionType, {
 });
 
 @ObjectType()
-export class LayoutStyle {
-  @Field(() => String, { nullable: true })
-  backgroundColor?: string;
-
-  @Field(() => String, { nullable: true })
-  padding?: string;
-
-  @Field(() => String, { nullable: true })
-  margin?: string;
-
-  @Field(() => String, { nullable: true })
-  width?: string;
-
-  @Field(() => String, { nullable: true })
-  height?: string;
-
-  // 기타 스타일 속성들을 추가할 수 있습니다.
-}
-
-@ObjectType()
 export class LayoutSection {
   @Field(() => String)
   name: string;
@@ -49,15 +33,19 @@ export class LayoutSection {
   @Field(() => Number)
   order: number;
 
-  @Field(() => [String], { defaultValue: [] })
-  children: string[];
+  @Column('simple-array')
+  @Field(() => [String])
+  widgetTypes: string[];
 
-  @Field(() => LayoutStyle, { nullable: true })
-  style?: LayoutStyle;
+  @Field(() => [Widget], { nullable: true })
+  widgets?: Widget[];
+
+  @Field(() => GraphQLJSON, { nullable: true })
+  style?: Record<string, any>;
 }
 
 @ObjectType()
-@Entity()
+@Entity('layout')
 export class Layout {
   @PrimaryGeneratedColumn('uuid')
   @Field(() => ID)
@@ -74,6 +62,13 @@ export class Layout {
   @Column('jsonb')
   @Field(() => [LayoutSection])
   sections: LayoutSection[];
+
+  @Field(() => [WidgetLayout], { nullable: true })
+  @OneToMany(() => WidgetLayout, (widgetLayout) => widgetLayout.layout, {
+    cascade: true,
+    nullable: true,
+  })
+  widgetRelations?: WidgetLayout[];
 
   @CreateDateColumn()
   @Field(() => Date)
