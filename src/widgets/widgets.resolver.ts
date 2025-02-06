@@ -41,14 +41,4 @@ export class WidgetsResolver {
   findHistory(@Args('id', { type: () => ID }) id: string) {
     return this.widgetsService.findHistory(id);
   }
-
-  @Query(() => [Widget], { name: 'widgetsByLayout' })
-  findByLayout(@Args('layoutId', { type: () => ID }) layoutId: string) {
-    return this.widgetsService.findByLayoutId(layoutId);
-  }
-
-  @Query(() => [Widget], { name: 'widgetsByParent' })
-  findByParent(@Args('parentId', { type: () => ID }) parentId: string) {
-    return this.widgetsService.findByParentId(parentId);
-  }
 }
