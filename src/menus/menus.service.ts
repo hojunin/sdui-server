@@ -13,10 +13,24 @@ export class MenusService {
   ) {}
 
   async findAll(): Promise<Menu[]> {
-    return this.menuRepository.findTrees({
+    const trees = await this.menuRepository.findTrees({
       depth: 3, // 최대 3뎁스까지만 조회
       relations: ['children'],
     });
+
+    // 재귀적으로 각 레벨의 노드들을 order로 정렬
+    const sortByOrder = (nodes: Menu[]): Menu[] => {
+      if (!nodes) return [];
+
+      return nodes
+        .sort((a, b) => a.order - b.order)
+        .map((node) => ({
+          ...node,
+          children: sortByOrder(node.children),
+        }));
+    };
+
+    return sortByOrder(trees);
   }
 
   async findOne(id: number): Promise<Menu> {

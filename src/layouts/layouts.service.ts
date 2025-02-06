@@ -2,7 +2,6 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateLayoutInput } from './dto/create-layout.input';
-import { UpdateLayoutInput } from './dto/update-layout.input';
 import { Layout } from './entities/layout.entity';
 import { ILike } from 'typeorm';
 
