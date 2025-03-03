@@ -19,6 +19,8 @@ import { Widget } from './widgets/entities/widget.entity';
 import { WidgetLayout } from './widgets/entities/widget-layout.entity';
 import { WidgetRelation } from './widgets/entities/widget-relation.entity';
 import GraphQLJSON from 'graphql-type-json';
+import { FormValidationSchemasModule } from './form-validation-schemas/form-validation-schemas.module';
+import { FormValidationSchema } from './form-validation-schemas/entities/form-validation-schema.entity';
 
 @Module({
   imports: [
@@ -54,6 +56,7 @@ import GraphQLJSON from 'graphql-type-json';
           Widget,
           WidgetLayout,
           WidgetRelation,
+          FormValidationSchema,
         ],
         synchronize: configService.get('NODE_ENV') === 'development',
         logging: configService.get('NODE_ENV') === 'development',
@@ -66,6 +69,7 @@ import GraphQLJSON from 'graphql-type-json';
     MenusModule,
     LayoutsModule,
     WidgetsModule,
+    FormValidationSchemasModule,
   ],
   controllers: [AppController],
   providers: [AppService, SeedService],
